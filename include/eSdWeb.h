@@ -1,9 +1,10 @@
+#pragma once
 #include "eSD.h"
 #include "eWeb.h"
 
 
-#define ESD_HANDLERS(concidional_funtion,handler_html,handler_statics) \
-    {{"/sd.html", HTTP_GET , sd_get_handler , NULL}, true, {sd_html_asm_start,sd_html_asm_end,"",concidional_funtion}}
+#define ESDWEB_HANDLERS(concidional_funtion,handler_html,handler_statics) \
+    {{"/sd.html", HTTP_GET , esdweb_handler , NULL}, true, {sdweb_html_asm_start,sdweb_html_asm_end,"",concidional_funtion}}
 
 
 
@@ -12,7 +13,7 @@
  {{"/ota_update", HTTP_POST, concidional_funtion, NULL}, true, {.uri_handler_function = ota_post_handler}}, \
 */
 
-extern const char sd_html_asm_start[] asm("_binary_sd_html_start");
-extern const char sd_html_asm_end[] asm("_binary_sd_html_end");
+extern const char sdweb_html_asm_start[] asm("_binary_sdweb_html_start");
+extern const char sdweb_html_asm_end[] asm("_binary_sdweb_html_end");
 
-esp_err_t sd_get_handler(httpd_req_t *req);
+esp_err_t esdweb_handler(httpd_req_t *req);
