@@ -30,7 +30,7 @@ void list_files() {
 esp_err_t esdweb_handler(httpd_req_t *req){
     // list_files();
     char*buffer;
-    EWEB_GENERATE_REPLACEMENT_BUFFER(buffer,sdweb_html_asm_start,"Hola Mundo");
+    EWEB_GENERATE_REPLACEMENT_BUFFER(buffer,sdweb_min_html_asm_start,"Hola Mundo");
     httpd_resp_set_type(req, "text/html");
     esp_err_t err = eweb_send_resp_try_chunk(req,buffer,strlen(buffer));
     free(buffer);
