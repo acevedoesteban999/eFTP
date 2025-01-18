@@ -7,6 +7,7 @@ idf_component_register(
         
     EMBED_FILES
         "src/sdweb.min.html"
+        "src/js/sdweb.min.js"
     
     REQUIRES
         eSD

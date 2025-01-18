@@ -1,0 +1,39 @@
+var index = 0;
+const sdWebData = document.getElementById("sdWebDataID");
+const spiner = document.getElementById("spinerID");
+const containerFiles = document.getElementById("containerFilesID");
+
+document.addEventListener("DOMContentLoaded", () => {
+  urlEncodedData = new URLSearchParams();
+  urlEncodedData.append("index", index);
+
+  fetch("/sdweb_get_data", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: urlEncodedData.toString(),
+  })
+    .then((response) => {
+      if (!response.ok)
+        throw new Error(response.status + " " + response.statusText);
+      else return response.text();
+    })
+    .then((data) => {
+      spiner.style.display = "none";
+      sdWebData.innerHTML = "";
+      const params = new URLSearchParams(data);
+      containerFiles.style.display = "block";
+      for (const value of params.getAll("fn")) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "row";
+        fileDiv.innerHTML = value;
+        containerFiles.appendChild(fileDiv);
+      }
+    })
+    .catch((error) => {
+      spiner.style.display = "none";
+      sdWebData.className = "alert error";
+      sdWebData.innerHTML = error;
+    });
+});

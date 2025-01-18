@@ -4,16 +4,25 @@
 
 
 #define ESDWEB_HANDLERS( execution_funtion ,handler_html,handler_statics) \
-    {{"/sd.min.html", HTTP_GET , execution_funtion , NULL}, true, {sdweb_min_html_asm_start,sdweb_min_html_asm_end,"",esdweb_handler,NULL}}
+    {{"/sdweb.min.html", HTTP_GET , handler_html , NULL}, true, {sdweb_min_html_asm_start,sdweb_min_html_asm_end,"",NULL,NULL}} \    
 
 
+// {{"/js/sdweb.min.js", HTTP_GET , handler_statics , NULL}, true, {sdweb_min_js_asm_start,sdweb_min_js_asm_end,"",NULL,NULL}} 
+// {{"/sdweb_get_data", HTTP_POST , execution_funtion , NULL}, true, {.uri_execution_function = esdweb_get_data_post_handler}} 
+    
 
-/* {{"/css/ota.min.css", HTTP_GET , handler_statics , NULL}, true, {ota_min_css_asm_start,ota_min_css_asm_end,"text/css",NULL}}, \
-// {{"/js/ota.min.js", HTTP_GET , handler_statics , NULL}, true, {ota_min_js_asm_start,ota_min_js_asm_end,"text/javascript",NULL}}, \
- {{"/ota_update", HTTP_POST, concidional_funtion, NULL}, true, {.uri_execution_function = ota_post_handler}}, \
-*/
+
+typedef struct
+{
+    char filename[256];
+    uint32_t size;
+}esdweb_data;
 
 extern const char sdweb_min_html_asm_start[] asm("_binary_sdweb_min_html_start");
 extern const char sdweb_min_html_asm_end[] asm("_binary_sdweb_min_html_end");
 
-esp_err_t esdweb_handler(httpd_req_t *req);
+extern const char sdweb_min_js_asm_start[] asm("_binary_sdweb_min_js_start");
+extern const char sdweb_min_js_asm_end[] asm("_binary_sdweb_min_js_end");
+
+
+esp_err_t esdweb_get_data_post_handler(httpd_req_t *req);
