@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   urlEncodedData = new URLSearchParams();
   urlEncodedData.append("index", index);
 
-  fetch("/sdweb_get_data", {
+  fetch("/ftp_get_data", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",

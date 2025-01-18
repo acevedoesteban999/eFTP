@@ -1,13 +1,13 @@
 idf_component_register(
     SRCS 
-        "eSdWeb.c"
+        "eFTP.c"
 
     INCLUDE_DIRS 
         "include"
         
     EMBED_FILES
-        "src/sdweb.min.html"
-        "src/js/sdweb.min.js"
+        "src/ftp.min.html"
+        "src/js/ftp.min.js"
     
     REQUIRES
         eSD

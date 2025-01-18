@@ -1,4 +1,4 @@
-#include "eSdWeb.h"
+#include "eFTP.h"
 
 #include <dirent.h>
 #include "ff.h"
@@ -7,7 +7,7 @@
 #define MAX_FILES 20
 
 
-esp_err_t esdweb_get_data_post_handler(httpd_req_t *req) {
+esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
     char *buff_request;
     EWEB_ALOCATE_GET_ALL_DATA_REQUEST(req, buff_request);
     
@@ -20,7 +20,7 @@ esp_err_t esdweb_get_data_post_handler(httpd_req_t *req) {
         return ESP_FAIL;
     }
 
-    esdweb_data* data = malloc(MAX_FILES * sizeof(esdweb_data));
+    eftp_data* data = malloc(MAX_FILES * sizeof(eftp_data));
     if (data == NULL) {
         ESP_LOGW("", "No se pudo asignar memoria para data\n");
         closedir(dir);
@@ -97,7 +97,7 @@ esp_err_t esdweb_get_data_post_handler(httpd_req_t *req) {
 //         return ESP_FAIL;
 //     }
 
-//     esdweb_data data[MAX_FILES];
+//     eftp_data data[MAX_FILES];
 //     char filepath[512];
 //     int buffer_counter = 0;
 //     int file_counter = 0;
