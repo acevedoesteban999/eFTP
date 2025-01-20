@@ -3,6 +3,10 @@ const sdWebData = document.getElementById("sdWebDataID");
 const spiner = document.getElementById("spinerID");
 const containerFiles = document.getElementById("containerFilesID");
 const containerInfo = document.getElementById("containerInfoID");
+const volumeName = document.getElementById("volumeNameID");
+const ocupiedSize = document.getElementById("ocupiedSizeID");
+const totalSpace = document.getElementById("totalSpaceID");
+
 document.addEventListener("DOMContentLoaded", () => {
   urlEncodedData = new URLSearchParams();
   urlEncodedData.append("index", index);
@@ -21,27 +25,42 @@ document.addEventListener("DOMContentLoaded", () => {
     .then((data) => {
       spiner.style.display = "none";
       sdWebData.innerHTML = "";
-      const params = new URLSearchParams(data);
-      containerFiles.style.display = "block";
       containerInfo.style.display = "block";
-      for (const value of params.getAll("fn")) {
+      containerFiles.style.display = "block";
+
+      const params = new URLSearchParams(data);
+
+      const vname = params.get("vname");
+      const freesize = parseInt(params.get("freesize"));
+      const totalsize = parseInt(params.get("totalsize"));
+      const occupiedSize = totalsize - freesize;
+
+      totalSpace.innerHTML = totalsize;
+      ocupiedSize.innerHTML = occupiedSize;
+      volumeName.innerHTML = vname;
+
+      const filenames = params.getAll("filename");
+      const filesizes = params.getAll("filesize");
+
+      filenames.forEach((filename, index) => {
+        const filesize = filesizes[index];
         const fileDiv = document.createElement("div");
         fileDiv.className = "m-1";
         fileDiv.innerHTML = `
-          <div class="r">
-              <div class="cl cl-nw">${value}</div>
-              <div class="cl cl-nw">-</div>
-              <div class="cl cl-nw">
-                <div class="r j-c">
-                  <div class="btn btn-ss btn-i" onclick="DownloadFile('${value}')">
-                    <i>&#8595;</i>
-                  </div>
+            <div class="r">
+                <div class="cl cl-nw">${filename}</div>
+                <div class="cl cl-nw">${filesize} bytes</div>
+                <div class="cl cl-nw">
+                    <div class="r j-c">
+                        <div class="btn btn-ss btn-i" onclick="DownloadFile('${filename}')">
+                            <i>&#8595;</i>
+                        </div>
+                    </div>
                 </div>
-              </div>
             </div>
-          `;
+        `;
         containerFiles.appendChild(fileDiv);
-      }
+      });
     })
     .catch((error) => {
       spiner.style.display = "none";
