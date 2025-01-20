@@ -3,11 +3,46 @@
 #include <dirent.h>
 #include "ff.h"
 #include "esp_log.h"
+#include "diskio.h"
 
 #define MAX_FILES 20
 #define FILE_CHUNK_SIZE 5120
 
 esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
+    FATFS *fs = NULL;  
+    DWORD free_clusters, total_clusters;
+    DWORD freesize, totalsize;
+    FRESULT res;
+    
+    if(esd_get_error()){
+        res = f_mount(fs, ESD_MOUNT_POINT, 1);
+        if (res != FR_OK) {
+            ESP_LOGE("", "Error at mount SD");
+            httpd_resp_send_err((req), HTTPD_500_INTERNAL_SERVER_ERROR, "Error at mount SD");
+            return ESP_FAIL;
+        }
+    }
+
+    res = f_getfree(ESD_MOUNT_POINT, &free_clusters, &fs);
+    if (res != FR_OK) {
+        httpd_resp_send_err((req), HTTPD_500_INTERNAL_SERVER_ERROR, "Error at get free SD space");
+        ESP_LOGE("", "Error al obtener el espacio libre");
+        return ESP_FAIL;
+    }
+
+    total_clusters = fs->n_fatent - 2; 
+    freesize = free_clusters * fs->csize * 512; 
+    totalsize = total_clusters * fs->csize * 512;
+
+    char volume_name[12];
+    res = f_getlabel(ESD_MOUNT_POINT, volume_name, NULL);
+    if (res != FR_OK) {
+        httpd_resp_send_err((req), HTTPD_500_INTERNAL_SERVER_ERROR, "Error at get SD name");
+        ESP_LOGE("", "Error al obtener el nombre del volumen");
+        return ESP_FAIL;
+    }
+
+
     char *buff_request;
     EWEB_ALOCATE_GET_ALL_DATA_REQUEST(req, buff_request);
     
@@ -57,7 +92,9 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
     closedir(dir);
 
     buffer_size += 4*buffer_counter;
-
+    buffer_size += strlen(volume_name);
+    buffer_size += snprintf(NULL, 0, "%lu %lu", freesize, totalsize);
+    
     char* buff = calloc(buffer_size + 1, sizeof(char));
     if (buff == NULL) {
         httpd_resp_send_err((req), HTTPD_500_INTERNAL_SERVER_ERROR, "No Memory for allocate");
@@ -65,15 +102,15 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
         return ESP_FAIL;
     }
 
-    char input[260];
+    eweb_add_str_urlencoded(buff,buffer_size,"vname",volume_name);
+    eweb_add_uint_urlencoded_param(buff,buffer_size,"freesize",freesize);
+    eweb_add_uint_urlencoded_param(buff,buffer_size,"totalsize",totalsize);
+    
     for (unsigned i = 0; i < buffer_counter; i++) {
-        if (i != 0)
-            snprintf(input, sizeof(input), "&fn=%s", data[i].filename); 
-        else
-            snprintf(input, sizeof(input), "fn=%s", data[i].filename); 
-
-        strcat(buff,input);
+        eweb_add_str_urlencoded(buff,buffer_size,"filename",data[i].filename);
+        eweb_add_str_urlencoded(buff,buffer_size,"filesize",data[i].size);
     }
+    
 
     httpd_resp_set_type(req, "application/x-www-form-urlencoded");
     eweb_send_resp_try_chunk(req, buff,strlen(buff) );
@@ -82,6 +119,7 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
 
     return ESP_OK;
 }
+
 
 esp_err_t eftp_get_file_post_handler(httpd_req_t *req){
     char *buff_request;
