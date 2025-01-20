@@ -5,7 +5,7 @@
 #include "esp_log.h"
 
 #define MAX_FILES 20
-
+#define FILE_CHUNK_SIZE 5120
 
 esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
     char *buff_request;
@@ -83,63 +83,51 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
     return ESP_OK;
 }
 
-
-// esp_err_t list_files_on_sdcard(httpd_req_t *req) {
+esp_err_t eftp_get_file_post_handler(httpd_req_t *req){
+    char *buff_request;
+    char filename[256];
+    char path[256 + strlen(ESD_MOUNT_POINT) + 2];
+    EWEB_ALOCATE_GET_ALL_DATA_REQUEST(req, buff_request);
+    EWEB_CHECK_PARAMETER_STR_URLENCODED(req,buff_request,"filename",filename,sizeof(filename));
+    strcpy(path,ESD_MOUNT_POINT);
+    strcat(path,"/");
+    strcat(path,filename);
+    FILE *file = NULL;
+    char *chunk = NULL;
+    error_t err = ESP_OK;
+    file = fopen(path, "rb");
+    if (!file) {
+        ESP_LOGE("","File not found: %s", path);
+        httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "File not found");
+        return ESP_FAIL;
+    }
+    chunk = (char *)malloc(FILE_CHUNK_SIZE);
+    if (!chunk) {
+        ESP_LOGE("", "Failed to allocate memory for file chunk");
+        
+        fclose(file);
+        return ESP_FAIL;
+    }
+    httpd_resp_set_type(req, "application/octet-stream");
     
-//     char *buff_request;
-//     EWEB_ALOCATE_GET_ALL_DATA_REQUEST(req,buff_request);
-//     int dataI;
-//     eweb_get_int_urlencoded(buff_request,"index",&dataI);
+    size_t read_bytes;
+    while ((read_bytes = fread(chunk, 1, FILE_CHUNK_SIZE, file)) > 0) {
+        if (httpd_resp_send_chunk(req, chunk, read_bytes) != ESP_OK) {
+            ESP_LOGE("FILE_HANDLER", "Error sending chunk");
+            err = ESP_FAIL;
+            break;
+        }
+    }
+    if (ferror(file)) {
+        ESP_LOGE("FILE_HANDLER", "Error reading the file");
+        err = ESP_FAIL;
+    } 
+
+    httpd_resp_send_chunk(req, NULL, 0);
+    if(err != ESP_OK)
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Internal Server Error");
+    free(chunk);
+    fclose(file);
     
-//     DIR* dir = opendir(ESD_MOUNT_POINT);
-//     if (dir == NULL) {
-//         ESP_LOGW("", "No se puede abrir el directorio SD\n");
-//         return ESP_FAIL;
-//     }
-
-//     eftp_data data[MAX_FILES];
-//     char filepath[512];
-//     int buffer_counter = 0;
-//     int file_counter = 0;
-//     struct dirent* entry;
-
-//     FRESULT fr;
-//     FILINFO file_info;
-
-//     while ((entry = readdir(dir)) != NULL) {
-//         if (entry->d_type == DT_REG) { 
-//             if(file_counter++ < dataI * MAX_FILES)
-//                 continue;
-            
-//             snprintf(filepath, sizeof(filepath), "%s/%s", ESD_MOUNT_POINT, entry->d_name);
-
-//             fr  = f_stat(filepath, &file_info);
-//             strncpy(data[buffer_counter].filename, entry->d_name, sizeof(data[buffer_counter].filename));
-//             data[buffer_counter].type = file_info.fsize;
-//             if (buffer_counter++ >= MAX_FILES)
-//                 break;
-//         }
-//     }
-
-//     closedir(dir);
-//     char*buff = calloc(sizeof(char),MAX_FILES * 255 + 1);
-//         if (buff == NULL) {
-//             httpd_resp_send_err((req), HTTPD_500_INTERNAL_SERVER_ERROR, "No Memory for alocate");
-//             return ESP_FAIL;
-//         }
-//     char input[260];
-//     for(unsigned i =0 ; i <buffer_counter;i++){
-//         if(i!=0)
-//             strcat(input,"&fn=%s");
-//         else
-//             strcat(input,"fn=%s");
-//         snprintf(buff,sizeof(buff),input,data[i].filename);
-//     }
-    
-    
-//     free(buff_request);
-//     eweb_send_resp_try_chunk(req,buff,strlen(buff));
-//     free(buff);
-
-//     return ESP_OK;
-// }
+    return err;
+}
