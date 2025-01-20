@@ -79,9 +79,10 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
             
             if(f == FR_OK){
                 strncpy(data[buffer_counter].filename, entry->d_name, sizeof(data[buffer_counter].filename));
-                buffer_size += strlen(entry->d_name);
-
                 data[buffer_counter++].size = file_info.fsize;
+
+                buffer_size += snprintf(NULL, 0, "%s", entry->d_name);
+                buffer_size += snprintf(NULL, 0, "%lu", file_info.fsize);
                 
                 if (buffer_counter >= MAX_FILES)
                     break;
@@ -91,8 +92,9 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
 
     closedir(dir);
 
-    buffer_size += 4*buffer_counter;
-    buffer_size += strlen(volume_name);
+    buffer_size += 4 * buffer_counter;
+    
+    buffer_size += snprintf(NULL, 0, "%s", volume_name);
     buffer_size += snprintf(NULL, 0, "%lu %lu", freesize, totalsize);
     
     char* buff = calloc(buffer_size + 1, sizeof(char));
@@ -102,13 +104,13 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
         return ESP_FAIL;
     }
 
-    eweb_add_str_urlencoded(buff,buffer_size,"vname",volume_name);
-    eweb_add_uint_urlencoded_param(buff,buffer_size,"freesize",freesize);
-    eweb_add_uint_urlencoded_param(buff,buffer_size,"totalsize",totalsize);
+    // eweb_add_str_urlencoded(buff,buffer_size,"vname",volume_name);
+    // eweb_add_uint_urlencoded(buff,buffer_size,"freesize",freesize);
+    // eweb_add_uint_urlencoded(buff,buffer_size,"totalsize",totalsize);
     
     for (unsigned i = 0; i < buffer_counter; i++) {
         eweb_add_str_urlencoded(buff,buffer_size,"filename",data[i].filename);
-        eweb_add_str_urlencoded(buff,buffer_size,"filesize",data[i].size);
+        eweb_add_uint_urlencoded(buff,buffer_size,"filesize",data[i].size);
     }
     
 
