@@ -50,7 +50,7 @@ function getFTPData() {
       const used_bytes = parseInt(params.get("used_bytes"));
       const total_bytes = parseInt(params.get("total_bytes"));
 
-      const bytes_rel = (100 * total_bytes) / used_bytes;
+      const bytes_rel = (100 * used_bytes) / total_bytes;
       if (bytes_rel < 50) colSize.classList = "cl bd bd-ss";
       else if (bytes_rel < 80) colSize.classList = "cl bd bd-wg";
       else colSize.classList = "cl bd bd-dg";
