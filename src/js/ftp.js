@@ -34,6 +34,7 @@ function getFTPData() {
   btnGetFileData.disabled = true;
 
   containerSpinner.style.display = "block";
+  containerInfo.style.display = "none";
   containerMessage.style.display = "none";
   containerFiles.innerHTML = "";
 
