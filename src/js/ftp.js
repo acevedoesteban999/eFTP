@@ -4,27 +4,22 @@ const spiner = document.getElementById("spinerID");
 const containerFiles = document.getElementById("containerFilesID");
 const containerInfo = document.getElementById("containerInfoID");
 const volumeName = document.getElementById("volumeNameID");
-const ocupiedSize = document.getElementById("ocupiedSizeID");
+const usedSize = document.getElementById("usedSizeID");
 const totalSpace = document.getElementById("totalSpaceID");
 const containerSpinner = document.getElementById("containerSpinnerID");
+const colSize = document.getElementById("colSizeID");
 
-function formatSizeSameScale(total, occupied) {
+function formatSize(bytes) {
   const units = ["Bytes", "KB", "MB", "GB", "TB"];
   let index = 0;
 
-  let size = total;
+  let size = bytes;
   while (size >= 1024 && index < units.length - 1) {
     size /= 1024;
     index++;
   }
 
-  const totalInScale = total / Math.pow(1024, index);
-  const occupiedInScale = occupied / Math.pow(1024, index);
-
-  return {
-    total: `${totalInScale.toFixed(2)} ${units[index]}`,
-    occupied: `${occupiedInScale.toFixed(2)} ${units[index]}`,
-  };
+  return `${size.toFixed(2)} ${units[index]}`;
 }
 
 function getFTPData() {
@@ -52,14 +47,17 @@ function getFTPData() {
       const params = new URLSearchParams(data);
 
       const volume_name = params.get("volume_name");
-      const freesize = parseInt(params.get("freesize"));
-      const totalsize = parseInt(params.get("totalsize"));
-      const occupiedSize = totalsize - freesize;
-      const formattedSizes = formatSizeSameScale(totalsize, occupiedSize);
+      const used_bytes = parseInt(params.get("used_bytes"));
+      const total_bytes = parseInt(params.get("total_bytes"));
+
+      const bytes_rel = (100 * total_bytes) / used_bytes;
+      if (bytes_rel < 50) colSize.classList = "cl bd bd-ss";
+      else if (bytes_rel < 80) colSize.classList = "cl bd bd-wg";
+      else colSize.classList = "cl bd bd-dg";
 
       volumeName.innerHTML = volume_name;
-      ocupiedSize.innerHTML = formattedSizes.occupied;
-      totalSpace.innerHTML = formattedSizes.total;
+      usedSize.innerHTML = formatSize(used_bytes);
+      totalSpace.innerHTML = formatSize(total_bytes);
 
       const filenames = params.getAll("filename");
       const filesizes = params.getAll("filesize");

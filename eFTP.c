@@ -9,34 +9,27 @@
 #define FILE_CHUNK_SIZE 5120
 
 esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
-    FATFS *fs = NULL;  
-    DWORD free_clusters, total_clusters;
-    DWORD freesize, totalsize;
-    FRESULT res;
+    FATFS *fs;
+    DWORD fre_clust, fre_sect, tot_sect;
+    uint64_t total_bytes = 0,used_bytes = 0;
     
     if(esd_get_error()){
-        res = f_mount(fs, ESD_MOUNT_POINT, 1);
-        if (res != FR_OK) {
+        if (f_mount(fs, ESD_MOUNT_POINT, 1) != FR_OK) {
             ESP_LOGE("", "Error at mount SD");
             httpd_resp_send_err((req), HTTPD_500_INTERNAL_SERVER_ERROR, "Error at mount SD");
             return ESP_FAIL;
         }
     }
 
-    res = f_getfree(ESD_MOUNT_POINT, &free_clusters, &fs);
-    if (res != FR_OK) {
-        httpd_resp_send_err((req), HTTPD_500_INTERNAL_SERVER_ERROR, "Error at get free SD space");
-        ESP_LOGE("", "Error al obtener el espacio libre");
-        return ESP_FAIL;
+    if (f_getfree(ESD_MOUNT_POINT, &fre_clust, &fs) == FR_OK) {
+        tot_sect = (fs->n_fatent - 2) * fs->csize;
+        fre_sect = fre_clust * fs->csize;
+        total_bytes = tot_sect * fs->ssize;
+        used_bytes = total_bytes - (fre_sect * fs->ssize);
     }
 
-    total_clusters = fs->n_fatent - 2; 
-    freesize = free_clusters * fs->csize * 512; 
-    totalsize = total_clusters * fs->csize * 512;
-
     char volume_name[12];
-    res = f_getlabel(ESD_MOUNT_POINT, volume_name, NULL);
-    if (res != FR_OK) {
+    if (f_getlabel(ESD_MOUNT_POINT, volume_name, NULL) != FR_OK) {
         httpd_resp_send_err((req), HTTPD_500_INTERNAL_SERVER_ERROR, "Error at get SD name");
         ESP_LOGE("", "Error al obtener el nombre del volumen");
         return ESP_FAIL;
@@ -95,23 +88,27 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
     buffer_size += 4 * buffer_counter;
 
     buffer_size += snprintf(NULL, 0, "%s", volume_name);
-    buffer_size += snprintf(NULL, 0, "%lu %lu", freesize, totalsize);
+    buffer_size += snprintf(NULL, 0, "%llu %llu", total_bytes, used_bytes);
     
     eStr str;
     eStr str1;
     
     eweb_add_str_urlencoded(&str,"volume_name",volume_name,false,false);
     
-    estr_copy_format(&str1,"%lu",freesize);
-    eweb_add_str_urlencoded(&str,"freesize",str1.data,true,false);
+    ESP_LOGW("","%llu %llu",used_bytes,total_bytes);
     
-    estr_copy_format(&str1,"%lu",totalsize);
-    eweb_add_str_urlencoded(&str,"totalsize",str1.data,true,false);
-
+    ESTR_COPY_FORMAT(&str1,"%llu",used_bytes);
+    eweb_add_str_urlencoded(&str,"used_bytes",str1.data,true,false);
+    
+    ESP_LOGW("","%s %s",str.data,str1.data);
+    ESTR_COPY_FORMAT(&str1,"%llu",total_bytes);
+    eweb_add_str_urlencoded(&str,"total_bytes",str1.data,true,false);
+    ESP_LOGW("","%s %s",str.data,str1.data);
     for (unsigned i = 0; i < buffer_counter; i++) {
         eweb_add_str_urlencoded(&str,"filename",data[i].filename,true,false);
         
-        estr_copy_format(&str1,"%lu",data[i].size);
+        
+        ESTR_COPY_FORMAT(&str1,"%lu",data[i].size);
         eweb_add_str_urlencoded(&str,"filesize",str1.data,true,false);
     }
     
