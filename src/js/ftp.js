@@ -6,8 +6,29 @@ const containerInfo = document.getElementById("containerInfoID");
 const volumeName = document.getElementById("volumeNameID");
 const ocupiedSize = document.getElementById("ocupiedSizeID");
 const totalSpace = document.getElementById("totalSpaceID");
+const containerSpinner = document.getElementById("containerSpinnerID");
 
-document.addEventListener("DOMContentLoaded", () => {
+function formatSizeSameScale(total, occupied) {
+  const units = ["Bytes", "KB", "MB", "GB", "TB"];
+  let index = 0;
+
+  let size = total;
+  while (size >= 1024 && index < units.length - 1) {
+    size /= 1024;
+    index++;
+  }
+
+  const totalInScale = total / Math.pow(1024, index);
+  const occupiedInScale = occupied / Math.pow(1024, index);
+
+  return {
+    total: `${totalInScale.toFixed(2)} ${units[index]}`,
+    occupied: `${occupiedInScale.toFixed(2)} ${units[index]}`,
+  };
+}
+
+function getFTPData() {
+  containerSpinner.style.display = "block";
   urlEncodedData = new URLSearchParams();
   urlEncodedData.append("index", index);
   fetch("/ftp_get_data", {
@@ -23,21 +44,22 @@ document.addEventListener("DOMContentLoaded", () => {
       else return response.text();
     })
     .then((data) => {
-      spiner.style.display = "none";
+      console.log(data);
+      containerSpinner.style.display = "none";
       sdWebData.innerHTML = "";
       containerInfo.style.display = "block";
-      containerFiles.style.display = "block";
 
       const params = new URLSearchParams(data);
 
-      const vname = params.get("vname");
+      const volume_name = params.get("volume_name");
       const freesize = parseInt(params.get("freesize"));
       const totalsize = parseInt(params.get("totalsize"));
       const occupiedSize = totalsize - freesize;
+      const formattedSizes = formatSizeSameScale(totalsize, occupiedSize);
 
-      totalSpace.innerHTML = totalsize;
-      ocupiedSize.innerHTML = occupiedSize;
-      volumeName.innerHTML = vname;
+      volumeName.innerHTML = volume_name;
+      ocupiedSize.innerHTML = formattedSizes.occupied;
+      totalSpace.innerHTML = formattedSizes.total;
 
       const filenames = params.getAll("filename");
       const filesizes = params.getAll("filesize");
@@ -67,7 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
       sdWebData.className = "bd bd-dg";
       sdWebData.innerHTML = error;
     });
-});
+}
 
 function DownloadFile(filename) {
   urlEncodedData = new URLSearchParams();

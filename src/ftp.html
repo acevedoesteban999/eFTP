@@ -13,10 +13,17 @@
     <main>
       <div class="c-f">
         <div class="r j-c">
-          <div id="spinerID" class="sp"></div>
+          <button class="btn btn-pr my-2" onclick="getFTPData()">
+            Get Data
+          </button>
         </div>
-        <div class="r j-c">
-          <div class="bg bg-sc" id="sdWebDataID">Loading Data</div>
+        <div class="r d-n" id="containerSpinnerID">
+          <div class="r j-c d-n">
+            <div id="spinerID" class="sp"></div>
+          </div>
+          <div class="r j-c">
+            <div class="bg bg-sc" id="sdWebDataID">Loading Data</div>
+          </div>
         </div>
         <div class="r j-c d-n" id="containerInfoID">
           <div class="r">
@@ -25,9 +32,9 @@
               <span id="ocupiedSizeID"></span>/<span id="totalSpaceID"></span>
             </div>
           </div>
-        </div>
-        <div class="r">
-          <div class="cl j-c" id="containerFilesID"></div>
+          <div class="r">
+            <div class="cl j-c" id="containerFilesID"></div>
+          </div>
         </div>
       </div>
     </main>

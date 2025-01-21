@@ -93,30 +93,33 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
     closedir(dir);
 
     buffer_size += 4 * buffer_counter;
-    
+
     buffer_size += snprintf(NULL, 0, "%s", volume_name);
     buffer_size += snprintf(NULL, 0, "%lu %lu", freesize, totalsize);
     
-    char* buff = calloc(buffer_size + 1, sizeof(char));
-    if (buff == NULL) {
-        httpd_resp_send_err((req), HTTPD_500_INTERNAL_SERVER_ERROR, "No Memory for allocate");
-        free(buff_request);
-        return ESP_FAIL;
-    }
-
-    // eweb_add_str_urlencoded(buff,buffer_size,"vname",volume_name);
-    // eweb_add_uint_urlencoded(buff,buffer_size,"freesize",freesize);
-    // eweb_add_uint_urlencoded(buff,buffer_size,"totalsize",totalsize);
+    eStr str;
+    eStr str1;
     
+    eweb_add_str_urlencoded(&str,"volume_name",volume_name,false,false);
+    
+    estr_copy_format(&str1,"%lu",freesize);
+    eweb_add_str_urlencoded(&str,"freesize",str1.data,true,false);
+    
+    estr_copy_format(&str1,"%lu",totalsize);
+    eweb_add_str_urlencoded(&str,"totalsize",str1.data,true,false);
+
     for (unsigned i = 0; i < buffer_counter; i++) {
-        eweb_add_str_urlencoded(buff,buffer_size,"filename",data[i].filename);
-        eweb_add_uint_urlencoded(buff,buffer_size,"filesize",data[i].size);
+        eweb_add_str_urlencoded(&str,"filename",data[i].filename,true,false);
+        
+        estr_copy_format(&str1,"%lu",data[i].size);
+        eweb_add_str_urlencoded(&str,"filesize",str1.data,true,false);
     }
     
 
     httpd_resp_set_type(req, "application/x-www-form-urlencoded");
-    eweb_send_resp_try_chunk(req, buff,strlen(buff) );
-    free(buff);
+    eweb_send_resp_try_chunk(req, str.data,str.length );
+    estr_free(&str);
+    estr_free(&str1);
     free(buff_request);
 
     return ESP_OK;

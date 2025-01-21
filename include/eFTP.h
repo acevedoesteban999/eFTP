@@ -1,7 +1,7 @@
 #pragma once
 #include "eSD.h"
 #include "eWeb.h"
-
+#include "eStr.h"
 
 #define EFTP_HANDLERS( execution_funtion ,handler_html,handler_statics) \
     {{"/ftp.min.html", HTTP_GET , handler_html , NULL}, true, {ftp_min_html_asm_start,ftp_min_html_asm_end,"",NULL,NULL}}, \
