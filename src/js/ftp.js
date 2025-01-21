@@ -39,7 +39,6 @@ function getFTPData() {
       else return response.text();
     })
     .then((data) => {
-      console.log(data);
       containerSpinner.style.display = "none";
       sdWebData.innerHTML = "";
       containerInfo.style.display = "block";
@@ -69,7 +68,7 @@ function getFTPData() {
         fileDiv.innerHTML = `
             <div class="r">
                 <div class="cl cl-nw">${filename}</div>
-                <div class="cl cl-nw">${filesize} bytes</div>
+                <div class="cl cl-nw">${formatSize(filesize)} bytes</div>
                 <div class="cl cl-nw">
                     <div class="r j-c">
                         <div class="btn btn-ss btn-i" onclick="DownloadFile('${filename}')">
@@ -92,7 +91,6 @@ function getFTPData() {
 function DownloadFile(filename) {
   urlEncodedData = new URLSearchParams();
   urlEncodedData.append("filename", filename);
-  console.log(urlEncodedData.toString());
   fetch("/ftp_get_file", {
     method: "POST",
     headers: {
