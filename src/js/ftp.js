@@ -8,6 +8,14 @@ const colSize = document.getElementById("colSizeID");
 const formIndex = document.getElementById("formIndexID");
 const btnGetFileData = document.getElementById("btnGetFileDataID");
 const containerMessage = document.getElementById("containerMessageID");
+const contentError = document.getElementById("contentErrorId");
+
+function setError(error) {
+  contentError.style.display = "block";
+  contentError.innerHTML = error;
+  formIndex.style.display = "none";
+  btnGetFileData.style.display = "none";
+}
 
 function formatSize(bytes) {
   const units = ["Bytes", "KB", "MB", "GB", "TB"];

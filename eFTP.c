@@ -8,6 +8,31 @@
 #define MAX_FILES 10
 #define FILE_CHUNK_SIZE 5120
 
+
+
+esp_err_t eftp_check_sd(httpd_req_t *req){
+    if(eweb_check_condicional_function(req)){
+        eStr str,str1;
+        estr_init(&str);
+        estr_init(&str1);
+        if(esd_has_error()){
+            ESTR_COPY_FORMAT(&str1,"setError('%s')",SD_STR);
+            ESTR_COPY_FORMAT(&str,ftp_min_html_asm_start,str1.ptr_char);
+        }
+        else
+            estr_copy_str(&str,ftp_min_html_asm_start);
+
+        EWEB_REPLACEMENT_FINISH_BUFF(str.ptr_char,str.length);
+        
+        httpd_resp_set_type(req, "text/html");
+        eweb_send_resp_try_chunk(req, str.ptr_char, str.length);
+        estr_free(&str1);
+        estr_free(&str);
+        return ESP_OK;
+    }
+    return ESP_FAIL;
+}
+
 esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
     FATFS *fs;
     DWORD fre_clust, fre_sect, tot_sect;
@@ -101,7 +126,9 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
     closedir(dir);
     
     eStr str,str1;
-    
+    estr_init(&str);
+    estr_init(&str1);
+
     eweb_add_str_urlencoded(&str,"volume_name",volume_name,false,false);
     
     ESTR_COPY_FORMAT(&str1,"%llu",used_bytes);
