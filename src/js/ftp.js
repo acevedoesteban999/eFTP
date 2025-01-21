@@ -1,6 +1,3 @@
-var index = 0;
-const sdWebData = document.getElementById("sdWebDataID");
-const spiner = document.getElementById("spinerID");
 const containerFiles = document.getElementById("containerFilesID");
 const containerInfo = document.getElementById("containerInfoID");
 const volumeName = document.getElementById("volumeNameID");
@@ -8,12 +5,15 @@ const usedSize = document.getElementById("usedSizeID");
 const totalSpace = document.getElementById("totalSpaceID");
 const containerSpinner = document.getElementById("containerSpinnerID");
 const colSize = document.getElementById("colSizeID");
+const formIndex = document.getElementById("formIndexID");
+const btnGetFileData = document.getElementById("btnGetFileDataID");
+const containerMessage = document.getElementById("containerMessageID");
 
 function formatSize(bytes) {
   const units = ["Bytes", "KB", "MB", "GB", "TB"];
   let index = 0;
 
-  let size = bytes;
+  let size = parseInt(bytes);
   while (size >= 1024 && index < units.length - 1) {
     size /= 1024;
     index++;
@@ -23,15 +23,26 @@ function formatSize(bytes) {
 }
 
 function getFTPData() {
+  if (!formIndex.checkValidity()) {
+    formIndex.reportValidity();
+    return;
+  }
   containerSpinner.style.display = "block";
-  urlEncodedData = new URLSearchParams();
-  urlEncodedData.append("index", index);
+  formData = new FormData(formIndex);
+  urlsearchparams = new URLSearchParams(formData);
+  urlsearchparams.set("index", parseInt(urlsearchparams.get("index")) - 1);
+  btnGetFileData.disabled = true;
+
+  containerSpinner.style.display = "block";
+  containerMessage.style.display = "none";
+  containerFiles.innerHTML = "";
+
   fetch("/ftp_get_data", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: urlEncodedData.toString(),
+    body: urlsearchparams.toString(),
   })
     .then((response) => {
       if (!response.ok)
@@ -40,7 +51,7 @@ function getFTPData() {
     })
     .then((data) => {
       containerSpinner.style.display = "none";
-      sdWebData.innerHTML = "";
+      containerMessage.innerHTML = "";
       containerInfo.style.display = "block";
 
       const params = new URLSearchParams(data);
@@ -68,7 +79,7 @@ function getFTPData() {
         fileDiv.innerHTML = `
             <div class="r">
                 <div class="cl cl-nw">${filename}</div>
-                <div class="cl cl-nw">${formatSize(filesize)} bytes</div>
+                <div class="cl cl-nw">${formatSize(filesize)}</div>
                 <div class="cl cl-nw">
                     <div class="r j-c">
                         <div class="btn btn-ss btn-i" onclick="DownloadFile('${filename}')">
@@ -80,11 +91,15 @@ function getFTPData() {
         `;
         containerFiles.appendChild(fileDiv);
       });
+
+      btnGetFileData.disabled = false;
     })
     .catch((error) => {
-      spiner.style.display = "none";
-      sdWebData.className = "bd bd-dg";
-      sdWebData.innerHTML = error;
+      containerSpinner.style.display = "none";
+      containerMessage.style.display = "block";
+      containerMessage.className = "bd bd-dg";
+      containerMessage.innerHTML = error;
+      btnGetFileData.disabled = false;
     });
 }
 
@@ -114,8 +129,8 @@ function DownloadFile(filename) {
       URL.revokeObjectURL(downloadUrl);
     })
     .catch((error) => {
-      spiner.style.display = "none";
-      sdWebData.className = "bd bd-dg";
-      sdWebData.innerHTML = error;
+      containerSpinner.style.display = "none";
+      containerMessage.className = "bd bd-dg";
+      containerMessage.innerHTML = error;
     });
 }
