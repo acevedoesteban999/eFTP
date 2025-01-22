@@ -10,72 +10,67 @@
   </head>
   <body>
     <div id="ajax-header"></div>
-    <main>
-      <div class="c-f">
-        <div class="c c-75 sh">
-          <div class="r j-c">
-            <div class="h2 bd bd-dg d-n" id="contentErrorId"></div>
+    <main class="c-f">
+      <div class="c c-75 sh">
+        <div class="r j-c">
+          <div class="bd bd-pr h1 px-4 l-g">FTP</div>
+        </div>
+        <div class="r j-c">
+          <div class="h2 bd bd-dg d-n" id="contentErrorId"></div>
+        </div>
+        <form id="formIndexID" class="r j-c">
+          <div class="f-g">
+            <label class="j-c">Index</label>
+            <input type="number" name="index" id="indexID" min="0" value="1" />
           </div>
-          <form id="formIndexID" class="r j-c">
-            <div class="f-g">
-              <label class="j-c">Index</label>
-              <input
-                type="number"
-                name="index"
-                id="indexID"
-                min="0"
-                value="1"
-              />
-            </div>
-          </form>
+        </form>
+        <div class="r j-c">
+          <button
+            class="btn btn-pr my-2"
+            id="btnGetFileDataID"
+            onclick="getFTPData()"
+          >
+            Get Data
+          </button>
+        </div>
+        <div class="r d-n" id="containerSpinnerID">
           <div class="r j-c">
-            <button
-              class="btn btn-pr my-2"
-              id="btnGetFileDataID"
-              onclick="getFTPData()"
-            >
-              Get Data
-            </button>
-          </div>
-          <div class="r d-n" id="containerSpinnerID">
-            <div class="r j-c">
-              <div class="sp m-1"></div>
-            </div>
-            <div class="r j-c">
-              <div class="bd bd-sc h5">Loading Data</div>
-            </div>
+            <div class="sp m-1"></div>
           </div>
           <div class="r j-c">
-            <div id="containerMessageID"></div>
+            <div class="bd bd-sc h5">Loading Data</div>
           </div>
         </div>
-        <div class="c w-75 c-nw j-c d-n" id="containerInfoID">
-          <div class="r my-2">
-            <div class="cl h5">
-              <div class="bd bd-sc" id="volumeNameID"></div>
-            </div>
-            <div class="cl h5">
-              <div id="colSizeID">
-                <span id="usedSizeID"></span>
-                /
-                <span id="totalSpaceID"></span>
-              </div>
+        <div class="r j-c">
+          <div id="containerMessageID"></div>
+        </div>
+      </div>
+      <div class="c w-75 c-nw j-c d-n" id="containerInfoID">
+        <div class="r my-2">
+          <div class="cl h5">
+            <div class="bd bd-sc" id="volumeNameID"></div>
+          </div>
+          <div class="cl h5">
+            <div id="colSizeID">
+              <span id="usedSizeID"></span>
+              /
+              <span id="totalSpaceID"></span>
             </div>
           </div>
-          <div class="r my-3">
-            <div class="cl cl-nw">
-              <div class="r bd bd-pr">File Name</div>
-            </div>
-            <div class="cl cl-nw">
-              <div class="r bd bd-pr">File Size</div>
-            </div>
-            <div class="cl cl-nw">
-              <div class="r bd bd-pr">Options</div>
-            </div>
+        </div>
+        <div class="r my-3">
+          <div class="cl cl-nw">
+            <div class="r bd bd-pr">File Name</div>
           </div>
-          <div class="r">
-            <div class="cl j-c" id="containerFilesID"></div>
+          <div class="cl cl-nw">
+            <div class="r bd bd-pr">File Size</div>
           </div>
+          <div class="cl cl-nw">
+            <div class="r bd bd-pr">Options</div>
+          </div>
+        </div>
+        <div class="r">
+          <div class="cl j-c" id="containerFilesID"></div>
         </div>
       </div>
     </main>
