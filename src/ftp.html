@@ -45,7 +45,7 @@
           <div id="containerMessageID"></div>
         </div>
       </div>
-      <div class="c w-75 c-nw j-c d-n" id="containerInfoID">
+      <div class="c c-75 j-c sh d-n" id="containerInfoID">
         <div class="r my-2">
           <div class="cl h5">
             <div class="bd bd-sc" id="volumeNameID"></div>
@@ -58,20 +58,16 @@
             </div>
           </div>
         </div>
-        <div class="r my-3">
-          <div class="cl cl-nw">
-            <div class="r bd bd-pr">File Name</div>
-          </div>
-          <div class="cl cl-nw">
-            <div class="r bd bd-pr">File Size</div>
-          </div>
-          <div class="cl cl-nw">
-            <div class="r bd bd-pr">Options</div>
-          </div>
-        </div>
-        <div class="r">
-          <div class="cl j-c" id="containerFilesID"></div>
-        </div>
+        <table class="t">
+          <thead>
+            <tr>
+              <th>File Name</th>
+              <th>File Size</th>
+              <th>Options</th>
+            </tr>
+          </thead>
+          <tbody id="containerFilesID"></tbody>
+        </table>
       </div>
     </main>
   </body>

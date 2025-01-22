@@ -83,24 +83,21 @@ function getFTPData() {
 
       filenames.forEach((filename, index) => {
         const filesize = filesizes[index];
-        const fileDiv = document.createElement("div");
-        fileDiv.className = "m-1";
-        fileDiv.innerHTML = `
-            <div class="r">
-                <div class="cl cl-nw">${filename}</div>
-                <div class="cl cl-nw">${formatSize(filesize)}</div>
-                <div class="cl cl-nw">
-                    <div class="r j-c">
-                        <div class="btn btn-sc sh btn-i" onclick="DownloadFile('${filename}')">
-                          <svg width="30" height="30" fill="currentColor" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M8.5 4.5a.5.5 0 0 0-1 0v5.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293z"/>
-                          </svg>
-                        </div>
-                    </div>
-                </div>
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${filename}</td>
+          <td>${formatSize(filesize)}</td>
+          <td>
+            <div class="r j-c">
+              <div class="btn btn-sc sh btn-i" onclick="DownloadFile('${filename}')">
+                <svg width="30" height="30" fill="currentColor" viewBox="0 0 16 16">
+                  <path fill-rule="evenodd" d="M8.5 4.5a.5.5 0 0 0-1 0v5.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293z"/>
+                </svg>
+              </div>
             </div>
+          </td>
         `;
-        containerFiles.appendChild(fileDiv);
+        containerFiles.appendChild(row);
       });
 
       btnGetFileData.disabled = false;
