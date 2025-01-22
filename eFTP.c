@@ -12,9 +12,19 @@
 
 esp_err_t eftp_check_sd(httpd_req_t *req){
     if(eweb_check_condicional_function(req)){
-        eStr str,str1;
-        estr_init(&str);
-        estr_init(&str1);
+        eSTR str,str1;
+        ESTR_MULTIPLE_INIT(
+            &str,
+            &str1
+        );
+        
+        eFree efree;
+        efree_init(&efree);
+        EFREE_MULTIPLE_PUSH(&efree,estr_free,
+            &str,
+            &str1
+        );
+
         if(esd_has_error()){
             ESTR_COPY_FORMAT(&str1,"setError('%s')",SD_STR);
             ESTR_COPY_FORMAT(&str,ftp_min_html_asm_start,str1.ptr_char);
@@ -25,9 +35,8 @@ esp_err_t eftp_check_sd(httpd_req_t *req){
         EWEB_REPLACEMENT_FINISH_BUFF(str.ptr_char,str.length);
         
         httpd_resp_set_type(req, "text/html");
-        eweb_send_resp_try_chunk(req, str.ptr_char, str.length);
-        estr_free(&str1);
-        estr_free(&str);
+        eweb_send_resp_try_chunk(req, &str);
+        efree_free(&efree);
         return ESP_OK;
     }
     return ESP_FAIL;
@@ -82,12 +91,25 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
     struct dirent* entry;
     FILINFO file_info;
 
-    
-    char *buff_request;
-    EWEB_ALOCATE_GET_ALL_DATA_REQUEST(req, buff_request);
+    eSTR str,str1,str2;
+    ESTR_MULTIPLE_INIT(
+        &str,
+        &str1,
+        &str2
+    );
+
+    eFree efree;
+    efree_init(&efree);
+    EFREE_MULTIPLE_PUSH(&efree,estr_free,
+        &str,
+        &str1,
+        &str2
+    );
+
+    EWEB_GET_DATA_REQUEST_STR(req, &str2, &efree);
     
     int index;
-    eweb_get_int_urlencoded(buff_request, "index", &index);
+    eweb_get_int_urlencoded(str2.ptr_char, "index", &index);
     
     bool reordenate_buff = false;
     while ((entry = readdir(dir)) != NULL) {
@@ -125,9 +147,7 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
 
     closedir(dir);
     
-    eStr str,str1;
-    estr_init(&str);
-    estr_init(&str1);
+    
 
     eweb_add_str_urlencoded(&str,"volume_name",volume_name,false,false);
     
@@ -146,47 +166,61 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
     
 
     httpd_resp_set_type(req, "application/x-www-form-urlencoded");
-    eweb_send_resp_try_chunk(req, str.ptr_char,str.length );
-    estr_free(&str);
-    estr_free(&str1);
-    free(ftp_data);
-    free(ftp_data_ordened);
-    free(buff_request);
+    eweb_send_resp_try_chunk(req, &str );
+    efree_free(&efree);
 
     return ESP_OK;
 }
 
 
 esp_err_t eftp_get_file_post_handler(httpd_req_t *req){
-    char *buff_request;
-    char filename[256];
-    char path[256 + strlen(ESD_MOUNT_POINT) + 2];
-    EWEB_ALOCATE_GET_ALL_DATA_REQUEST(req, buff_request);
-    EWEB_CHECK_PARAMETER_STR_URLENCODED(req,buff_request,"filename",filename,sizeof(filename));
-    strcpy(path,ESD_MOUNT_POINT);
-    strcat(path,"/");
-    strcat(path,filename);
+    eSTR str,str1,filename_str,path_str;
+    ESTR_MULTIPLE_INIT(
+        &str,
+        &str1,
+        &filename_str,
+        &path_str
+    );
+
+    eFree efree;
+    efree_init(&efree);
+    EFREE_MULTIPLE_PUSH(&efree,estr_free,
+        &str,
+        &str1,
+        &filename_str,
+        &path_str
+    );
+    
+    estr_prepare_str(&filename_str,256);
+    estr_prepare_str(&path_str,256 + strlen(ESD_MOUNT_POINT) + 2);
+    
+    EWEB_GET_DATA_REQUEST_STR(req, &str,&efree);
+    EWEB_CHECK_STR_URLENCODED(req,str.ptr_char,"filename",filename_str.capacity,filename_str.capacity,&efree);
+    
+    strcpy(path_str.ptr_char,ESD_MOUNT_POINT);
+    strcat(path_str.ptr_char,"/");
+    strcat(path_str.ptr_char,filename_str.ptr_char);
     FILE *file = NULL;
-    char *chunk = NULL;
     error_t err = ESP_OK;
-    file = fopen(path, "rb");
+    file = fopen(path_str.ptr_char, "rb");
     if (!file) {
-        ESP_LOGE("","File not found: %s", path);
+        ESP_LOGE("","File not found: %s", path_str.ptr_char);
         httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "File not found");
+        efree_free(&efree);
         return ESP_FAIL;
     }
-    chunk = (char *)malloc(FILE_CHUNK_SIZE);
-    if (!chunk) {
+
+    if (!estr_prepare_str(&str1,FILE_CHUNK_SIZE)) {
         ESP_LOGE("", "Failed to allocate memory for file chunk");
-        
         fclose(file);
+        efree_free(&efree);
         return ESP_FAIL;
     }
     httpd_resp_set_type(req, "application/octet-stream");
     
     size_t read_bytes;
-    while ((read_bytes = fread(chunk, 1, FILE_CHUNK_SIZE, file)) > 0) {
-        if (httpd_resp_send_chunk(req, chunk, read_bytes) != ESP_OK) {
+    while ((read_bytes = fread(str1.ptr_char, 1, FILE_CHUNK_SIZE, file)) > 0) {
+        if (httpd_resp_send_chunk(req, str1.ptr_char, read_bytes) != ESP_OK) {
             ESP_LOGE("FILE_HANDLER", "Error sending chunk");
             err = ESP_FAIL;
             break;
@@ -200,8 +234,8 @@ esp_err_t eftp_get_file_post_handler(httpd_req_t *req){
     httpd_resp_send_chunk(req, NULL, 0);
     if(err != ESP_OK)
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Internal Server Error");
-    free(chunk);
-    fclose(file);
     
+    fclose(file);
+    efree_free(&efree);
     return err;
 }

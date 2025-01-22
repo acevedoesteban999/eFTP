@@ -10,7 +10,6 @@ idf_component_register(
         "src/js/ftp.min.js"
     
     REQUIRES
-        eStr
         eSD
         eWeb
         
