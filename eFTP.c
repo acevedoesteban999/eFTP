@@ -31,8 +31,6 @@ esp_err_t eftp_check_sd(httpd_req_t *req){
         }
         else
             estr_copy_str(&str,ftp_min_html_asm_start);
-
-        EWEB_REPLACEMENT_FINISH_BUFF(str.ptr_char,str.length);
         
         httpd_resp_set_type(req, "text/html");
         eweb_send_resp_try_chunk(req, &str);
@@ -190,7 +188,7 @@ esp_err_t eftp_get_file_post_handler(httpd_req_t *req){
         &filename_str,
         &path_str
     );
-    
+
     estr_prepare_str(&filename_str,256);
     estr_prepare_str(&path_str,256 + strlen(ESD_MOUNT_POINT) + 2);
     
