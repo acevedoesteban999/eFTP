@@ -109,9 +109,9 @@ function getFTPData() {
     });
 }
 
-function DownloadFile(f) {
+function DownloadFile(file) {
   urlEncodedData = new URLSearchParams();
-  urlEncodedData.append("filename", f);
+  urlEncodedData.append("filename", file);
   fetch("/ftp_get_file", {
     method: "POST",
     headers: {
@@ -128,7 +128,7 @@ function DownloadFile(f) {
       const downloadUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = downloadUrl;
-      a.download = f;
+      a.download = file;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
