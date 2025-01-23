@@ -33,7 +33,7 @@ esp_err_t eftp_check_sd(httpd_req_t *req){
             estr_copy_str(&str,ftp_min_html_asm_start);
         
         httpd_resp_set_type(req, "text/html");
-        eweb_send_resp_try_chunk(req, &str);
+        eweb_send_resp_try_chunk_str(req, &str);
         efree_free(&efree);
         return ESP_OK;
     }
@@ -164,7 +164,7 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
     
 
     httpd_resp_set_type(req, "application/x-www-form-urlencoded");
-    eweb_send_resp_try_chunk(req, &str );
+    eweb_send_resp_try_chunk_str(req, &str );
     efree_free(&efree);
 
     return ESP_OK;
