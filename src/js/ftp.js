@@ -11,10 +11,10 @@ const containerMessage = document.getElementById("containerMessageID");
 const contentError = document.getElementById("contentErrorId");
 
 function setError(error) {
-  contentError.style.display = "block";
+  s(contentError);
   contentError.innerHTML = error;
-  formIndex.style.display = "none";
-  btnGetFileData.style.display = "none";
+  h(formIndex);
+  h(btnGetFileData);
 }
 
 function formatSize(bytes) {
@@ -35,15 +35,14 @@ function getFTPData() {
     formIndex.reportValidity();
     return;
   }
-  containerSpinner.style.display = "block";
-  formData = new FormData(formIndex);
-  urlsearchparams = new URLSearchParams(formData);
-  urlsearchparams.set("index", parseInt(urlsearchparams.get("index")) - 1);
-  btnGetFileData.disabled = true;
-
-  containerSpinner.style.display = "block";
-  containerInfo.style.display = "none";
-  containerMessage.style.display = "none";
+  s(containerSpinner);
+  let f = new FormData(formIndex),
+    u = new URLSearchParams(f);
+  u.set("index", parseInt(u.get("index")) - 1);
+  btnGetFileData.disabled = !0;
+  s(containerSpinner);
+  h(containerInfo);
+  h(containerMessage);
   containerFiles.innerHTML = "";
 
   fetch("/ftp_get_data", {
@@ -51,19 +50,18 @@ function getFTPData() {
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: urlsearchparams.toString(),
+    body: u.toString(),
   })
-    .then((response) => {
-      if (!response.ok)
-        throw new Error(response.status + " " + response.statusText);
-      else return response.text();
+    .then((r) => {
+      if (!r.ok) throw Error(r.status + " " + r.statusText);
+      return r.text();
     })
-    .then((data) => {
-      containerSpinner.style.display = "none";
+    .then((d) => {
+      h(containerSpinner);
       containerMessage.innerHTML = "";
-      containerInfo.style.display = "block";
+      s(containerInfo);
 
-      const params = new URLSearchParams(data);
+      const params = new URLSearchParams(d);
 
       const volume_name = params.get("volume_name");
       const used_bytes = parseInt(params.get("used_bytes"));
@@ -100,20 +98,20 @@ function getFTPData() {
         containerFiles.appendChild(row);
       });
 
-      btnGetFileData.disabled = false;
+      btnGetFileData.disabled = !1;
     })
-    .catch((error) => {
-      containerSpinner.style.display = "none";
-      containerMessage.style.display = "block";
+    .catch((e) => {
+      h(containerSpinner);
+      s(containerMessage);
       containerMessage.className = "bd bd-dg";
-      containerMessage.innerHTML = error;
-      btnGetFileData.disabled = false;
+      containerMessage.innerHTML = e;
+      btnGetFileData.disabled = !1;
     });
 }
 
-function DownloadFile(filename) {
+function DownloadFile(f) {
   urlEncodedData = new URLSearchParams();
-  urlEncodedData.append("filename", filename);
+  urlEncodedData.append("filename", f);
   fetch("/ftp_get_file", {
     method: "POST",
     headers: {
@@ -130,15 +128,16 @@ function DownloadFile(filename) {
       const downloadUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = downloadUrl;
-      a.download = filename;
+      a.download = f;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(downloadUrl);
     })
-    .catch((error) => {
-      containerSpinner.style.display = "none";
+    .catch((e) => {
+      h(containerSpinner);
+      s(containerMessage);
       containerMessage.className = "bd bd-dg";
-      containerMessage.innerHTML = error;
+      containerMessage.innerHTML = e;
     });
 }
