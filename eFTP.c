@@ -193,7 +193,7 @@ esp_err_t eftp_get_file_post_handler(httpd_req_t *req){
     estr_prepare_str(&path_str,256 + strlen(ESD_MOUNT_POINT) + 2);
     
     EWEB_GET_DATA_REQUEST_STR(req, &str,&efree);
-    EWEB_CHECK_STR_URLENCODED(req,str.ptr_char,"filename",filename_str.ptr_char,filename_str.capacity,&efree);
+    EWEB_CHECK_STR_URLENCODED(req,str.ptr_char,"filename",&filename_str,&efree);
     
     estr_append_str(&path_str,false,ESD_MOUNT_POINT);
     estr_append_str(&path_str,false,"/");
