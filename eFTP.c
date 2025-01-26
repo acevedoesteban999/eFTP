@@ -238,3 +238,37 @@ esp_err_t eftp_get_file_post_handler(httpd_req_t *req){
     efree_free(&efree);
     return err;
 }
+
+
+
+esp_err_t eftp_delete_file_post_handler(httpd_req_t *req){
+    eSTR str,str1;
+    ESTR_MULTIPLE_INIT(
+        &str,
+        &str1
+    );
+
+    eFree efree;
+    EFREE_MULTIPLE_PUSH(
+        &efree,
+        estr_free,
+        &str,
+        &str1
+    );
+
+    EWEB_GET_DATA_REQUEST_STR(req,&str,&efree);
+    EWEB_CHECK_STR_URLENCODED(req,str.ptr_char,"filename",&str1,&efree);
+
+    if(esd_delete_file(str1.ptr_char)){
+        httpd_resp_set_type(req, "text/html");
+        httpd_resp_send(req, "File Deleted", HTTPD_RESP_USE_STRLEN);
+        return ESP_OK;
+    }
+    else{
+
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Internal Server Error");
+        return ESP_FAIL;
+    }
+
+
+}
