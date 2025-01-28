@@ -28,8 +28,10 @@ esp_err_t eftp_uri_handler(httpd_req_t *req){
         ESTR_COPY_FORMAT(&str1,"setError('%s');",SD_STR);
         ESTR_COPY_FORMAT(&str,ftp_min_html_asm_start,str1.ptr_char);
     }
-    else
-        estr_copy_str(&str,ftp_min_html_asm_start);
+    else{
+        ESTR_COPY_FORMAT(&str1,"getFTPData();",SD_STR);
+        ESTR_COPY_FORMAT(&str,ftp_min_html_asm_start,str1.ptr_char);
+    }
     
     httpd_resp_set_type(req, "text/html");
     eweb_send_resp_ui_str(req, &str);
