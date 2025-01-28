@@ -2,8 +2,8 @@
 #include "eSD.h"
 #include "eWeb.h"
 
-#define EFTP_HANDLERS( execution_funtion ,condicional_function,handler_statics) \
-    {{"/ftp.min.html", HTTP_GET , eftp_check_sd , NULL}, true, {ftp_min_html_asm_start,ftp_min_html_asm_end,"",NULL,condicional_function}}, \
+#define EFTP_HANDLERS( execution_funtion,handler_statics) \
+    {{"/ftp.min.html", HTTP_GET , execution_funtion , NULL}, true, {ftp_min_html_asm_start,ftp_min_html_asm_end,"",eftp_uri_handler,NULL}}, \
     {{"/js/ftp.min.js", HTTP_GET , handler_statics , NULL}, true, {ftp_min_js_asm_start,ftp_min_js_asm_end,"",NULL,NULL}}, \
     {{"/ftp_get_data", HTTP_POST , execution_funtion , NULL}, true, {.uri_execution_function = eftp_get_data_post_handler}}, \
     {{"/ftp_get_file", HTTP_POST , execution_funtion , NULL}, true, {.uri_execution_function = eftp_get_file_post_handler}}, \
@@ -25,5 +25,5 @@ extern const char ftp_min_js_asm_end[] asm("_binary_ftp_min_js_end");
 esp_err_t eftp_get_data_post_handler(httpd_req_t *req);
 esp_err_t eftp_get_file_post_handler(httpd_req_t *req);
 esp_err_t eftp_delete_file_post_handler(httpd_req_t *req);
-esp_err_t eftp_check_sd(httpd_req_t *req);
+esp_err_t eftp_uri_handler(httpd_req_t *req);
 

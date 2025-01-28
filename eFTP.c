@@ -9,35 +9,32 @@
 #define FILE_CHUNK_SIZE 5120
 
 
+esp_err_t eftp_uri_handler(httpd_req_t *req){
+    
+    eSTR str,str1;
+    ESTR_MULTIPLE_INIT(
+        &str,
+        &str1
+    );
+    
+    eFree efree;
+    efree_init(&efree);
+    EFREE_MULTIPLE_PUSH(&efree,estr_free,
+        &str,
+        &str1
+    );
 
-esp_err_t eftp_check_sd(httpd_req_t *req){
-    if(eweb_check_condicional_function(req)){
-        eSTR str,str1;
-        ESTR_MULTIPLE_INIT(
-            &str,
-            &str1
-        );
-        
-        eFree efree;
-        efree_init(&efree);
-        EFREE_MULTIPLE_PUSH(&efree,estr_free,
-            &str,
-            &str1
-        );
-
-        if(esd_has_error()){
-            ESTR_COPY_FORMAT(&str1,"setError('%s')",SD_STR);
-            ESTR_COPY_FORMAT(&str,ftp_min_html_asm_start,str1.ptr_char);
-        }
-        else
-            estr_copy_str(&str,ftp_min_html_asm_start);
-        
-        httpd_resp_set_type(req, "text/html");
-        eweb_send_resp_try_chunk_str(req, &str);
-        efree_free(&efree);
-        return ESP_OK;
+    if(esd_has_error()){
+        ESTR_COPY_FORMAT(&str1,"setError('%s');",SD_STR);
+        ESTR_COPY_FORMAT(&str,ftp_min_html_asm_start,str1.ptr_char);
     }
-    return ESP_FAIL;
+    else
+        estr_copy_str(&str,ftp_min_html_asm_start);
+    
+    httpd_resp_set_type(req, "text/html");
+    eweb_send_resp_ui_str(req, &str);
+    efree_free(&efree);
+    return ESP_OK;
 }
 
 esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
@@ -164,7 +161,7 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
     
 
     httpd_resp_set_type(req, "application/x-www-form-urlencoded");
-    eweb_send_resp_try_chunk_str(req, &str );
+    eweb_send_resp_ui_str(req, &str );
     efree_free(&efree);
 
     return ESP_OK;
@@ -188,10 +185,6 @@ esp_err_t eftp_get_file_post_handler(httpd_req_t *req){
         &filename_str,
         &path_str
     );
-
-    estr_prepare_str(&filename_str,256);
-    estr_prepare_str(&path_str,256 + strlen(ESD_MOUNT_POINT) + 2);
-    
     EWEB_GET_DATA_REQUEST_STR(req, &str,&efree);
     EWEB_CHECK_STR_URLENCODED(req,str.ptr_char,"filename",&filename_str,&efree);
     
