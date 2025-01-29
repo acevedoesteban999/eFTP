@@ -24,7 +24,7 @@ esp_err_t eftp_uri_handler(httpd_req_t *req){
         &str1
     );
 
-    if(esd_has_error()){
+    if(esd_has_error() && esd_get_error() != 4){
         ESTR_COPY_FORMAT(&str1,"setError('%s');",SD_STR);
         ESTR_COPY_FORMAT(&str,ftp_min_html_asm_start,str1.ptr_char);
     }
@@ -44,11 +44,12 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
     DWORD fre_clust, fre_sect, tot_sect;
     uint64_t total_bytes = 0,used_bytes = 0;
     
-    if(esd_get_error()){
-        if (f_mount(fs, ESD_MOUNT_POINT, 1) != FR_OK) {
-            ESP_LOGE("", "Error at mount SD");
-            httpd_resp_send_err((req), HTTPD_500_INTERNAL_SERVER_ERROR, "Error at mount SD");
-            return ESP_FAIL;
+    if(esd_has_error()){
+        if(esd_get_error()  == -1){
+            if(esd_init() != ESP_OK)
+                return ESP_FAIL;
+            else
+                return ESP_FAIL;
         }
     }
 
@@ -237,24 +238,31 @@ esp_err_t eftp_get_file_post_handler(httpd_req_t *req){
 
 
 esp_err_t eftp_delete_file_post_handler(httpd_req_t *req){
-    eSTR str,str1;
+    eSTR str,str1,path_str;
     ESTR_MULTIPLE_INIT(
         &str,
-        &str1
+        &str1,
+        &path_str
     );
 
     eFree efree;
+    efree_init(&efree);
     EFREE_MULTIPLE_PUSH(
         &efree,
         estr_free,
         &str,
-        &str1
+        &str1,
+        &path_str
     );
 
     EWEB_GET_DATA_REQUEST_STR(req,&str,&efree);
     EWEB_CHECK_STR_URLENCODED(req,str.ptr_char,"filename",&str1,&efree);
 
-    if(esd_delete_file(str1.ptr_char)){
+    estr_append_str(&path_str,false,ESD_MOUNT_POINT);
+    estr_append_str(&path_str,false,"/");
+    estr_append_str(&path_str,false,str1.ptr_char);
+
+    if(esd_delete_file(path_str.ptr_char)){
         httpd_resp_set_type(req, "text/html");
         httpd_resp_send(req, "File Deleted", HTTPD_RESP_USE_STRLEN);
         return ESP_OK;
