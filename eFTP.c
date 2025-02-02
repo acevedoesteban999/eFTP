@@ -134,7 +134,7 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
             }
         }
     }
-    
+
     for (int i = ftp_data_counter - 1; i >= 0 ; i--) 
         memcpy(&ftp_data_ordened[ftp_data_counter_ordened++], &ftp_data[i], sizeof(eftp_data));
 
@@ -164,7 +164,7 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
     
 
     httpd_resp_set_type(req, "application/x-www-form-urlencoded");
-    eweb_send_resp_ui_str(req, &str );
+    eweb_send_resp_buff(req, str.ptr_char,str.length );
     efree_free(&efree);
 
     return ESP_OK;
