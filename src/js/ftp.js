@@ -9,6 +9,7 @@ const formIndex = document.getElementById("formIndexID");
 const btnGetFileData = document.getElementById("btnGetFileDataID");
 const containerMessage = document.getElementById("containerMessageID");
 const contentError = document.getElementById("contentErrorId");
+const PageIndex = document.getElementById("PageIndexID");
 
 function setError(error) {
   s(contentError);
@@ -30,7 +31,7 @@ function formatSize(bytes) {
   return `${size.toFixed(2)} ${units[index]}`;
 }
 
-function getFTPData() {
+function getFTPData(index) {
   if (!formIndex.checkValidity()) {
     formIndex.reportValidity();
     return;
@@ -38,7 +39,7 @@ function getFTPData() {
   s(containerSpinner);
   let f = new FormData(formIndex),
     u = new URLSearchParams(f);
-  u.set("index", parseInt(u.get("index")) - 1);
+  u.set("index", index);
   btnGetFileData.disabled = !0;
   s(containerSpinner);
   h(containerInfo);
@@ -106,6 +107,19 @@ function getFTPData() {
         `;
         containerFiles.appendChild(row);
       });
+
+      const max_index = parseInt(params.get("max_index"));
+      
+
+      PageIndex.innerHTML = `
+        <a onclick="getFTPData(1)" ${index <= 1? "disabled":""} class="btn btn-sm btn-pr"><</a>
+        <a onclick="getFTPData(${index - 1})" ${index <= 1? "disabled":""} class="btn btn-sm btn-pr"><<</a>
+        <a class="">${index}</a>
+        <a class="">/</a>
+        <a class="">${max_index}</a>
+        <a onclick="getFTPData(${index + 1})" ${index >= max_index? "disabled":""} class="btn btn-sm btn-pr">></a>
+        <a onclick="getFTPData(${max_index})" ${index >= max_index? "disabled":""} class="btn btn-sm btn-pr">>></a>
+      `;
 
       btnGetFileData.disabled = !1;
     })

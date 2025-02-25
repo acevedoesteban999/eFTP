@@ -26,4 +26,6 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req);
 esp_err_t eftp_get_file_post_handler(httpd_req_t *req);
 esp_err_t eftp_delete_file_post_handler(httpd_req_t *req);
 esp_err_t eftp_uri_handler(httpd_req_t *req);
-
+esp_err_t refresh_files_uri_handler(httpd_req_t *req);
+void eftp_init();
+bool _refresh_files();

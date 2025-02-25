@@ -8,6 +8,42 @@
 #define MAX_FILES 10
 #define FILE_CHUNK_SIZE 5120
 
+int TOTAL_SD_FILES_COUNTER = 0;
+int MAX_SD_FILES_INDEX = 0;
+volatile bool in_proccess = false;
+
+void eftp_init(){
+    _refresh_files();
+}
+
+
+bool _refresh_files(){
+    DIR* dir = opendir(ESD_MOUNT_POINT);
+    if (dir == NULL) {
+        TOTAL_SD_FILES_COUNTER = 0;
+        MAX_SD_FILES_INDEX = 1;
+        return false;    
+    }
+
+    struct dirent* entry;
+    TOTAL_SD_FILES_COUNTER = 0;
+    
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type == DT_REG) {
+            TOTAL_SD_FILES_COUNTER++;
+        }
+    }
+    MAX_SD_FILES_INDEX = (TOTAL_SD_FILES_COUNTER/MAX_FILES) + 1;
+    
+    closedir(dir);
+    return true;
+}
+
+esp_err_t refresh_files_uri_handler(httpd_req_t *req) {
+    if(!_refresh_files())
+        EWEB_RETURN_ERROR_500(req,NULL,"Error at open SD");
+    return ESP_OK;
+}
 
 esp_err_t eftp_uri_handler(httpd_req_t *req){
     
@@ -29,7 +65,7 @@ esp_err_t eftp_uri_handler(httpd_req_t *req){
         ESTR_COPY_FORMAT(&str,ftp_min_html_asm_start,str1.ptr_char);
     }
     else{
-        ESTR_COPY_FORMAT(&str1,"getFTPData();",SD_STR);
+        ESTR_COPY_FORMAT(&str1,"getFTPData(%i);",MAX_SD_FILES_INDEX);
         ESTR_COPY_FORMAT(&str,ftp_min_html_asm_start,str1.ptr_char);
     }
     
@@ -62,26 +98,20 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
 
     char volume_name[12];
     if (f_getlabel(ESD_MOUNT_POINT, volume_name, NULL) != FR_OK) {
-        httpd_resp_send_err((req), HTTPD_500_INTERNAL_SERVER_ERROR, "Error at get SD name");
-        ESP_LOGE("", "Error al obtener el nombre del volumen");
-        return ESP_FAIL;
+        EWEB_RETURN_ERROR_500(req,NULL,"Error at get SD name");
     }
 
     DIR* dir = opendir(ESD_MOUNT_POINT);
     
     if (dir == NULL) {
-        ESP_LOGW("", "No se puede abrir el directorio SD\n");
-        httpd_resp_send_err((req), HTTPD_500_INTERNAL_SERVER_ERROR, "Error at open SD directory");
-        return ESP_FAIL;
+        EWEB_RETURN_ERROR_500(req,NULL,"Error at open SD directory");
     }
 
     eftp_data* ftp_data = malloc(  MAX_FILES * sizeof(eftp_data));
     eftp_data* ftp_data_ordened = malloc( MAX_FILES * sizeof(eftp_data));
     if (ftp_data == NULL || ftp_data_ordened == NULL) {
-        ESP_LOGW("", "No se pudo asignar memoria para ftp_data\n");
-        httpd_resp_send_err((req), HTTPD_500_INTERNAL_SERVER_ERROR, "Internal Server Error");
         closedir(dir);
-        return ESP_FAIL;
+        EWEB_RETURN_ERROR_500(req,NULL,"Error at open alocate ftpdata");
     }
 
     int ftp_data_counter = 0 ,ftp_data_counter_ordened = 0;
@@ -108,45 +138,40 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
     
     int index;
     eweb_get_int_urlencoded(str2.ptr_char, "index", &index);
+    if(index < 0 || index > MAX_SD_FILES_INDEX){
+        EWEB_RETURN_ERROR_500(req,&efree,"Index no valid");
+    }
     
-    bool reordenate_buff = false;
-    while ((entry = readdir(dir)) != NULL) {
+
+    int offset;
+    if (index == 0) 
+        offset = MAX_SD_FILES_INDEX - MAX_FILES  - 1;
+    else
+        offset = (index - 1) * MAX_FILES - 1;
+
+    file_counter = 0;
+    ftp_data_counter = 0;
+    while ((entry = readdir(dir)) != NULL && ftp_data_counter < MAX_FILES) {
         if (entry->d_type == DT_REG) {
-            
-            if (index >= 0 && file_counter++ < index * MAX_FILES)
-                continue;
-            
-            FRESULT f = f_stat(entry->d_name, &file_info);
-            
-            if(f == FR_OK){
-                strncpy(ftp_data[ftp_data_counter].filename, entry->d_name, sizeof(ftp_data[ftp_data_counter].filename));
-                ftp_data[ftp_data_counter++].size = file_info.fsize;
-
-                if(index < 0){
-                    if (ftp_data_counter >= MAX_FILES){
-                        reordenate_buff = true;
-                        ftp_data_counter = 0;
-                    }
-
+            if (file_counter > offset) {
+                FRESULT f = f_stat(entry->d_name, &file_info);
+                if (f == FR_OK) {
+                    strncpy(ftp_data[ftp_data_counter].filename, entry->d_name,sizeof(ftp_data[ftp_data_counter].filename));
+                    ftp_data[ftp_data_counter].size = file_info.fsize;
+                    if(ftp_data_counter++ >= MAX_FILES)
+                        break;
                 }
-                else if (ftp_data_counter >= MAX_FILES)
-                    break;
             }
+            file_counter++;
         }
     }
 
-    for (int i = ftp_data_counter - 1; i >= 0 ; i--) 
-        memcpy(&ftp_data_ordened[ftp_data_counter_ordened++], &ftp_data[i], sizeof(eftp_data));
-
-    if (reordenate_buff) {
-        for (int i = MAX_FILES - 1; i >= ftp_data_counter ; i--) 
-            memcpy(&ftp_data_ordened[ftp_data_counter_ordened++], &ftp_data[i], sizeof(eftp_data));
+    for (int i = ftp_data_counter - 1; i >= 0; i--) {
+        memcpy(&ftp_data_ordened[ftp_data_counter - 1 - i], 
+               &ftp_data[i], sizeof(eftp_data));
     }
 
     closedir(dir);
-    
-    
-
     eweb_add_str_urlencoded(&str,"volume_name",volume_name,false,false);
     
     ESTR_COPY_FORMAT(&str1,"%llu",used_bytes);
@@ -161,6 +186,9 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
         ESTR_COPY_FORMAT(&str1,"%lu",ftp_data_ordened[i].size);
         eweb_add_str_urlencoded(&str,"filesize",str1.ptr_char,true,false);
     }
+    
+    ESTR_COPY_FORMAT(&str2,"%i",MAX_SD_FILES_INDEX);
+    eweb_add_str_urlencoded(&str,"max_index",str2.ptr_char,true,false);
     
 
     httpd_resp_set_type(req, "application/x-www-form-urlencoded");
