@@ -61,12 +61,12 @@ esp_err_t eftp_uri_handler(httpd_req_t *req){
     );
 
     if(esd_has_error() && esd_get_error() != 4){
-        ESTR_COPY_FORMAT(&str1,"setError('%s');",SD_STR);
-        ESTR_COPY_FORMAT(&str,ftp_min_html_asm_start,str1.ptr_char);
+        estr_copy_format(&str1,"setError('%s');",SD_STR);
+        estr_copy_format(&str,ftp_min_html_asm_start,str1.ptr_char);
     }
     else{
-        ESTR_COPY_FORMAT(&str1,"getFTPData(%i);",MAX_SD_FILES_INDEX);
-        ESTR_COPY_FORMAT(&str,ftp_min_html_asm_start,str1.ptr_char);
+        estr_copy_format(&str1,"getFTPData(%i);",MAX_SD_FILES_INDEX);
+        estr_copy_format(&str,ftp_min_html_asm_start,str1.ptr_char);
     }
     
     httpd_resp_set_type(req, "text/html");
@@ -174,20 +174,20 @@ esp_err_t eftp_get_data_post_handler(httpd_req_t *req) {
     closedir(dir);
     eweb_add_str_urlencoded(&str,"volume_name",volume_name,false,false);
     
-    ESTR_COPY_FORMAT(&str1,"%llu",used_bytes);
+    estr_copy_format(&str1,"%llu",used_bytes);
     eweb_add_str_urlencoded(&str,"used_bytes",str1.ptr_char,true,false);
     
-    ESTR_COPY_FORMAT(&str1,"%llu",total_bytes);
+    estr_copy_format(&str1,"%llu",total_bytes);
     eweb_add_str_urlencoded(&str,"total_bytes",str1.ptr_char,true,false);
 
     for (unsigned i = 0; i < ftp_data_counter_ordened; i++) {
         eweb_add_str_urlencoded(&str,"filename",ftp_data_ordened[i].filename,true,false);
         
-        ESTR_COPY_FORMAT(&str1,"%lu",ftp_data_ordened[i].size);
+        estr_copy_format(&str1,"%lu",ftp_data_ordened[i].size);
         eweb_add_str_urlencoded(&str,"filesize",str1.ptr_char,true,false);
     }
     
-    ESTR_COPY_FORMAT(&str2,"%i",MAX_SD_FILES_INDEX);
+    estr_copy_format(&str2,"%i",MAX_SD_FILES_INDEX);
     eweb_add_str_urlencoded(&str,"max_index",str2.ptr_char,true,false);
     
 
